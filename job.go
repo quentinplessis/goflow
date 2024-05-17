@@ -172,7 +172,9 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			if v == None && !j.Dag.isDownstream(task.Name) {
 				j.storeTaskState(task.Name, Running, nil, nil)
 				e = syncStartTsToExecution(e, task.Name)
+				e.Lock()
 				store.Set(e.ID.String(), e)
+				e.Unlock()
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(e, writes)
 			}
@@ -203,7 +205,9 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 				if upstreamDone && task.TriggerRule == allDone {
 					j.storeTaskState(task.Name, Running, nil, nil)
 					e = syncStartTsToExecution(e, task.Name)
+					e.Lock()
 					store.Set(e.ID.String(), e)
+					e.Unlock()
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
@@ -211,7 +215,9 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, Running, nil, nil)
 					e = syncStartTsToExecution(e, task.Name)
+					e.Lock()
 					store.Set(e.ID.String(), e)
+					e.Unlock()
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
@@ -234,7 +240,9 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 		e.State = j.loadState()
 		e.ModifiedTs = time.Now().UTC()
 		e = syncResultToExecution(e, write.key, write.val, write.result, write.err)
+		e.Lock()
 		store.Set(e.ID.String(), e)
+		e.Unlock()
 
 		if j.allDone() {
 			break

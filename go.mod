@@ -1,6 +1,6 @@
 module github.com/fieldryand/goflow/v3
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/ef-ds/deque v1.0.4

@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ type Execution struct {
 	ModifiedTs time.Time       `json:"modifiedTs"`
 	State      state           `json:"state"`
 	Tasks      []TaskExecution `json:"tasks"`
+	sync.RWMutex
 }
 
 // TaskExecution represents the execution of a task.
@@ -93,6 +95,8 @@ func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 
 // Sync the task result and state to an execution
 func syncResultToExecution(e *Execution, task string, s state, r any, err error) *Execution {
+	e.Lock()
+	defer e.Unlock()
 
 	// if there is an error, convert it to a string
 	errString := ""
@@ -113,6 +117,8 @@ func syncResultToExecution(e *Execution, task string, s state, r any, err error)
 
 // Sync the starting timestamp of a task to an execution
 func syncStartTsToExecution(e *Execution, task string) *Execution {
+	e.Lock()
+	defer e.Unlock()
 
 	for ix, t := range e.Tasks {
 		if t.Name == task {
